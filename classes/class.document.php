@@ -2,15 +2,20 @@
 /**
  * Builds the llms.txt markdown from WordPress content.
  *
- * @package LlmsTxt
+ * @package Llms_Txt
  */
 
-namespace LlmsTxt;
+declare(strict_types=1);
+
+namespace Llms_Txt;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Content → markdown body.
+ */
 final class Document {
 
 	public function render(): string {

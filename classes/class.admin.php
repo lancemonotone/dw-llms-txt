@@ -2,18 +2,23 @@
 /**
  * Preview screen and notices.
  *
- * @package LlmsTxt
+ * @package Llms_Txt
  */
 
-namespace LlmsTxt;
+declare(strict_types=1);
+
+namespace Llms_Txt;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Settings preview + admin notices.
+ */
 final class Admin {
 
-	public function register(): void {
+	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_notices', array( $this, 'notices' ) );
 	}
@@ -55,3 +60,5 @@ final class Admin {
 		}
 	}
 }
+
+new Admin();

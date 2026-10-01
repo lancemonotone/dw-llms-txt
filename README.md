@@ -21,14 +21,15 @@ Author: Rus Miller.
 ## Structure
 
 ```text
-llms-txt.php             Bootstrap
+llms-txt.php           Bootstrap (glob-load classes)
 classes/
-  class-plugin.php       Wiring
-  class-endpoint.php     /llms.txt response
-  class-document.php     Content → markdown body
-  class-cache.php        Transient cache
-  class-admin.php        Admin helpers
+  class.endpoint.php   /llms.txt response
+  class.document.php   Content → markdown body
+  class.cache.php      Transient cache + invalidation
+  class.admin.php      Admin preview + notices
 ```
+
+Classes self-wire with `new ClassName();` at the bottom of each file (same pattern as RM Audio Playlist).
 
 ## License
 

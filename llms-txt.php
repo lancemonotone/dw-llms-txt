@@ -1,13 +1,17 @@
 <?php
 /**
- * Plugin Name: llms.txt
- * Description: Serves a dynamic llms.txt map of your WordPress site for AI agents.
- * Version:     1.1.0
- * Author:      Rus Miller
- * Text Domain: llms-txt
+ * Plugin Name:       llms.txt
+ * Description:       Serves a dynamic llms.txt map of your WordPress site for AI agents.
+ * Version:           1.1.0
+ * Requires at least: 6.0
+ * Requires PHP:      7.4
+ * Author:            Rus Miller
+ * Text Domain:       llms-txt
  *
- * @package LlmsTxt
+ * @package Llms_Txt
  */
+
+declare(strict_types=1);
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -15,27 +19,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'LLMS_TXT_VERSION', '1.1.0' );
 define( 'LLMS_TXT_FILE', __FILE__ );
-define( 'LLMS_TXT_PATH', plugin_dir_path( __FILE__ ) );
+define( 'LLMS_TXT_DIR', plugin_dir_path( __FILE__ ) );
+define( 'LLMS_TXT_URL', plugin_dir_url( __FILE__ ) );
 
-require_once LLMS_TXT_PATH . 'classes/class-document.php';
-require_once LLMS_TXT_PATH . 'classes/class-cache.php';
-require_once LLMS_TXT_PATH . 'classes/class-endpoint.php';
-require_once LLMS_TXT_PATH . 'classes/class-admin.php';
-require_once LLMS_TXT_PATH . 'classes/class-plugin.php';
+foreach ( glob( LLMS_TXT_DIR . 'classes/class.*.php' ) as $filename ) {
+	require_once $filename;
+}
 
-register_activation_hook(
-	__FILE__,
-	static function () {
-		\LlmsTxt\Endpoint::register_rewrite();
-		flush_rewrite_rules();
-	}
-);
+/**
+ * Activation: register rewrite, flush rules.
+ */
+function llms_txt_activate(): void {
+	\Llms_Txt\Endpoint::register_rewrite();
+	flush_rewrite_rules();
+}
 
-register_deactivation_hook(
-	__FILE__,
-	static function () {
-		flush_rewrite_rules();
-	}
-);
+/**
+ * Deactivation: flush rewrite rules.
+ */
+function llms_txt_deactivate(): void {
+	flush_rewrite_rules();
+}
 
-\LlmsTxt\Plugin::instance();
+register_activation_hook( __FILE__, 'llms_txt_activate' );
+register_deactivation_hook( __FILE__, 'llms_txt_deactivate' );

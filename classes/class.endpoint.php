@@ -2,25 +2,30 @@
 /**
  * Public /llms.txt response.
  *
- * @package LlmsTxt
+ * @package Llms_Txt
  */
 
-namespace LlmsTxt;
+declare(strict_types=1);
+
+namespace Llms_Txt;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Rewrite + plain-text response for /llms.txt.
+ */
 final class Endpoint {
 
-	public static function register_rewrite(): void {
-		add_rewrite_rule( '^llms\.txt$', 'index.php?llms_txt=1', 'top' );
-	}
-
-	public function register(): void {
+	public function __construct() {
 		add_action( 'init', array( self::class, 'register_rewrite' ) );
 		add_filter( 'query_vars', array( $this, 'query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'maybe_render' ) );
+	}
+
+	public static function register_rewrite(): void {
+		add_rewrite_rule( '^llms\.txt$', 'index.php?llms_txt=1', 'top' );
 	}
 
 	/**
@@ -56,3 +61,5 @@ final class Endpoint {
 		return is_string( $path ) && untrailingslashit( $path ) === '/llms.txt';
 	}
 }
+
+new Endpoint();
