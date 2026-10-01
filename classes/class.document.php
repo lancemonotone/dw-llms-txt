@@ -18,6 +18,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Document {
 
+	private Options $options;
+
+	public function __construct() {
+		$this->options = new Options();
+	}
+
 	public function render(): string {
 		$sections = array(
 			$this->intro(),
@@ -143,8 +149,14 @@ final class Document {
 			return 0;
 		}
 
+		$chosen = $this->options->menu_location();
+
+		if ( $chosen !== '' && ! empty( $locations[ $chosen ] ) ) {
+			return (int) $locations[ $chosen ];
+		}
+
 		/**
-		 * Preferred theme_location slugs for the Navigation section.
+		 * Preferred theme_location slugs for the Navigation section (when menu is Auto).
 		 *
 		 * @param list<string> $slugs
 		 */
@@ -306,7 +318,7 @@ final class Document {
 	}
 
 	/**
-	 * Public post types with archives (plus posts when a Posts page is set).
+	 * Selected public post types with archives (plus posts when a Posts page is set).
 	 *
 	 * @return array<int, string>
 	 */
@@ -324,12 +336,18 @@ final class Document {
 			return array();
 		}
 
+		$allowed = $this->options->post_types();
+
 		foreach ( $post_types as $post_type => $object ) {
 			if ( ! is_string( $post_type ) || ! $object instanceof \WP_Post_Type ) {
 				continue;
 			}
 
 			if ( in_array( $post_type, array( 'attachment', 'page' ), true ) ) {
+				continue;
+			}
+
+			if ( is_array( $allowed ) && ! in_array( $post_type, $allowed, true ) ) {
 				continue;
 			}
 
@@ -370,6 +388,10 @@ final class Document {
 	 * @return array<int, string>
 	 */
 	private function optional(): array {
+		if ( ! $this->options->include_sitemap() ) {
+			return array();
+		}
+
 		return array(
 			$this->link_line( 'Sitemap index', home_url( '/wp-sitemap.xml' ) ),
 		);

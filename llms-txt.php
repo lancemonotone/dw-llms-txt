@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       llms.txt
  * Description:       Serves a dynamic llms.txt map of your WordPress site for AI agents.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Rus Miller
@@ -17,12 +17,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'LLMS_TXT_VERSION', '1.1.0' );
+define( 'LLMS_TXT_VERSION', '1.2.0' );
 define( 'LLMS_TXT_FILE', __FILE__ );
 define( 'LLMS_TXT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LLMS_TXT_URL', plugin_dir_url( __FILE__ ) );
 
-foreach ( glob( LLMS_TXT_DIR . 'classes/class.*.php' ) as $filename ) {
+$llms_txt_files = glob( LLMS_TXT_DIR . 'classes/class.*.php' );
+if ( ! is_array( $llms_txt_files ) ) {
+	$llms_txt_files = array();
+}
+
+usort(
+	$llms_txt_files,
+	static function ( string $a, string $b ): int {
+		$an = basename( $a );
+		$bn = basename( $b );
+		// Options has no hooks; other classes may construct it at load time.
+		if ( 'class.options.php' === $an ) {
+			return -1;
+		}
+		if ( 'class.options.php' === $bn ) {
+			return 1;
+		}
+		return strcmp( $an, $bn );
+	}
+);
+
+foreach ( $llms_txt_files as $filename ) {
 	require_once $filename;
 }
 

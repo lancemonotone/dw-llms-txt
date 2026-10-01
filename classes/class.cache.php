@@ -29,6 +29,7 @@ final class Cache {
 		add_action( 'delete_term', array( $this, 'forget' ) );
 		add_action( 'update_option_blogdescription', array( $this, 'forget' ) );
 		add_action( 'update_option_blogname', array( $this, 'forget' ) );
+		add_action( 'llms_txt_settings_updated', array( $this, 'forget' ) );
 	}
 
 	public function get(): string {

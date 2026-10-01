@@ -1,6 +1,6 @@
 <?php
 /**
- * Preview screen and notices.
+ * Settings screen, preview, and notices.
  *
  * @package Llms_Txt
  */
@@ -14,11 +14,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Settings preview + admin notices.
+ * Settings → llms.txt.
  */
 final class Admin {
 
+	private Options $options;
+
 	public function __construct() {
+		$this->options = new Options();
+
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_notices', array( $this, 'notices' ) );
 	}
@@ -38,16 +42,116 @@ final class Admin {
 			return;
 		}
 
+		$settings = $this->options->all();
+		$menus    = $this->options->assigned_menu_locations();
+		$catalog  = $this->options->catalog_post_types();
+		$selected = $settings['post_types'];
+
+		if ( $selected === null ) {
+			$selected = array_keys( $catalog );
+		}
+
 		$url  = esc_url( home_url( '/llms.txt' ) );
 		$body = esc_textarea( ( new Document() )->render() );
+
+		$menu_options = $this->menu_options_html( $menus, $settings['menu_location'] );
+		$type_checks  = $this->post_type_checks_html( $catalog, $selected );
+		$sitemap_on   = $settings['include_sitemap'] ? ' checked="checked"' : '';
+		$option_name  = esc_attr( Options::OPTION );
+
+		settings_errors( Options::OPTION );
 
 		echo <<<HTML
 <div class="wrap">
 	<h1>llms.txt</h1>
 	<p><a href="{$url}">View public llms.txt</a></p>
+
+	<form method="post" action="options.php">
+HTML;
+
+		settings_fields( Settings::GROUP );
+
+		echo <<<HTML
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><label for="llms-txt-menu-location">Navigation menu</label></th>
+				<td>
+					<select name="{$option_name}[menu_location]" id="llms-txt-menu-location">
+						{$menu_options}
+					</select>
+					<p class="description">Which assigned theme menu feeds the Navigation section. Auto picks the first preferred location (filterable).</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">Content types</th>
+				<td>
+					<fieldset>
+						<legend class="screen-reader-text">Content types</legend>
+						{$type_checks}
+					</fieldset>
+					<p class="description">Archive links included under Content types. Uncheck to omit. Types without a public archive URL still produce no line.</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">Optional</th>
+				<td>
+					<label>
+						<input type="checkbox" name="{$option_name}[include_sitemap]" value="1"{$sitemap_on} />
+						Link to WordPress sitemap index (<code>/wp-sitemap.xml</code>)
+					</label>
+				</td>
+			</tr>
+		</table>
+HTML;
+
+		submit_button( 'Save settings' );
+
+		echo <<<HTML
+	</form>
+
+	<h2>Preview</h2>
 	<textarea readonly="readonly" rows="28" class="large-text code">{$body}</textarea>
 </div>
 HTML;
+	}
+
+	/**
+	 * @param array<string, string> $menus
+	 */
+	private function menu_options_html( array $menus, string $current ): string {
+		$auto_selected = $current === '' ? ' selected="selected"' : '';
+		$html          = '<option value=""' . $auto_selected . '>' . esc_html( 'Auto (preferred locations)' ) . '</option>';
+
+		foreach ( $menus as $slug => $label ) {
+			$selected = $slug === $current ? ' selected="selected"' : '';
+			$html    .= '<option value="' . esc_attr( $slug ) . '"' . $selected . '>' . esc_html( $label . ' (' . $slug . ')' ) . '</option>';
+		}
+
+		return $html;
+	}
+
+	/**
+	 * @param array<string, string> $catalog
+	 * @param list<string>          $selected
+	 */
+	private function post_type_checks_html( array $catalog, array $selected ): string {
+		if ( $catalog === array() ) {
+			return '<p>' . esc_html( 'No public post types available.' ) . '</p>';
+		}
+
+		$selected_map = array_fill_keys( $selected, true );
+		$html         = '';
+
+		foreach ( $catalog as $slug => $label ) {
+			$checked = isset( $selected_map[ $slug ] ) ? ' checked="checked"' : '';
+			$name    = esc_attr( Options::OPTION . '[post_types][]' );
+			$html   .= '<label>';
+			$html   .= '<input type="checkbox" name="' . $name . '" value="' . esc_attr( $slug ) . '"' . $checked . ' /> ';
+			$html   .= esc_html( $label . ' (' . $slug . ')' );
+			$html   .= '</label><br />';
+		}
+
+		return $html;
 	}
 
 	public function notices(): void {
