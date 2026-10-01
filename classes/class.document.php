@@ -362,18 +362,7 @@ final class Document {
 	}
 
 	private function archive_line( string $post_type, \WP_Post_Type $object ): ?string {
-		$url = '';
-
-		if ( $post_type === 'post' ) {
-			$page_for_posts = (int) get_option( 'page_for_posts' );
-			if ( $page_for_posts > 0 ) {
-				$permalink = get_permalink( $page_for_posts );
-				$url       = is_string( $permalink ) ? $permalink : '';
-			}
-		} elseif ( ! empty( $object->has_archive ) ) {
-			$link = get_post_type_archive_link( $post_type );
-			$url  = is_string( $link ) ? $link : '';
-		}
+		$url = $this->options->archive_url( $post_type, $object );
 
 		if ( $url === '' ) {
 			return null;

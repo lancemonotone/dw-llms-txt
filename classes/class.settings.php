@@ -33,23 +33,21 @@ final class Settings {
 			self::GROUP,
 			Options::OPTION,
 			array(
-				'type'              => 'array',
 				'sanitize_callback' => array( $this, 'sanitize' ),
-				'default'           => array(),
 			)
 		);
 	}
 
 	/**
 	 * @param mixed $input Raw form input.
-	 * @return array{menu_location: string, post_types: list<string>, include_sitemap: bool}
+	 * @return array{configured: int, menu_location: string, post_types: list<string>, include_sitemap: int}
 	 */
 	public function sanitize( $input ): array {
 		if ( ! is_array( $input ) ) {
 			$input = array();
 		}
 
-		$menu = isset( $input['menu_location'] ) ? sanitize_key( (string) $input['menu_location'] ) : '';
+		$menu     = isset( $input['menu_location'] ) ? sanitize_key( (string) $input['menu_location'] ) : '';
 		$assigned = $this->options->assigned_menu_locations();
 
 		if ( $menu !== '' && ! isset( $assigned[ $menu ] ) ) {
@@ -73,12 +71,12 @@ final class Settings {
 
 		$types = array_values( array_unique( $types ) );
 
-		$sitemap = ! empty( $input['include_sitemap'] );
-
+		// Store 1/0 so the value survives option serialization clearly.
 		$clean = array(
+			'configured'      => 1,
 			'menu_location'   => $menu,
 			'post_types'      => $types,
-			'include_sitemap' => $sitemap,
+			'include_sitemap' => ! empty( $input['include_sitemap'] ) ? 1 : 0,
 		);
 
 		do_action( 'llms_txt_settings_updated', $clean );

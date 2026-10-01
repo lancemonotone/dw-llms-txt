@@ -42,6 +42,12 @@ final class Admin {
 			return;
 		}
 
+		if ( isset( $_GET['settings-updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin notice flag from options.php redirect.
+			wp_cache_delete( Options::OPTION, 'options' );
+			wp_cache_delete( 'alloptions', 'options' );
+			delete_transient( 'llms_txt_body' );
+		}
+
 		$settings = $this->options->all();
 		$menus    = $this->options->assigned_menu_locations();
 		$catalog  = $this->options->catalog_post_types();
@@ -72,6 +78,7 @@ HTML;
 		settings_fields( Settings::GROUP );
 
 		echo <<<HTML
+		<input type="hidden" name="{$option_name}[configured]" value="1" />
 		<table class="form-table" role="presentation">
 			<tr>
 				<th scope="row"><label for="llms-txt-menu-location">Navigation menu</label></th>
@@ -89,7 +96,7 @@ HTML;
 						<legend class="screen-reader-text">Content types</legend>
 						{$type_checks}
 					</fieldset>
-					<p class="description">Archive links included under Content types. Uncheck to omit. Types without a public archive URL still produce no line.</p>
+					<p class="description">Only types with a public archive URL are listed. Uncheck to omit from Content types.</p>
 				</td>
 			</tr>
 			<tr>
@@ -110,6 +117,7 @@ HTML;
 	</form>
 
 	<h2>Preview</h2>
+	<p class="description">Updates after you save. Unchecking the sitemap or a listed content type should change this text.</p>
 	<textarea readonly="readonly" rows="28" class="large-text code">{$body}</textarea>
 </div>
 HTML;
