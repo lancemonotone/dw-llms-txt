@@ -2,10 +2,10 @@
 /**
  * Transient cache for the rendered llms.txt body.
  *
- * @package DW\LlmsTxt
+ * @package LlmsTxt
  */
 
-namespace DW\LlmsTxt;
+namespace LlmsTxt;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Cache {
 
-	private const KEY = 'dw_llms_txt_body';
+	private const KEY = 'llms_txt_body';
 
 	public static function get(): string {
 		$cached = get_transient( self::KEY );

@@ -1,27 +1,28 @@
-# D|W llms.txt
+# llms.txt
 
 WordPress plugin that serves a dynamic [`llms.txt`](https://llmstxt.org/) map of live site content for AI agents.
 
-Built for [Destination Williamstown](https://destinationwilliamstown.org/). Author: Rus Miller.
+Author: Rus Miller.
 
 ## What it does
 
 - Registers a public `/llms.txt` endpoint (rewrite + `REQUEST_URI` fallback)
-- Builds plain-text sections from WordPress content (pages, venues, events, trip ideas, etc.)
-- Caches the rendered body in a transient (invalidated from admin when needed)
-- Small admin UI to clear cache / inspect status
+- Builds plain-text sections from WordPress content (primary menu pages, public CPT archives)
+- Caches the rendered body in a transient (invalidated on content/menu changes)
+- Settings → **llms.txt** preview screen
+- Extensible via `llms_txt_document_sections` and `llms_txt_menu_locations` filters
 
 ## Install
 
-1. Copy this folder to `wp-content/plugins/dw-llms-txt/`
-2. Activate **D|W llms.txt**
+1. Copy this folder to `wp-content/plugins/llms-txt/` (folder name can vary)
+2. Activate **llms.txt**
 3. Visit `https://yoursite.example/llms.txt` (flush permalinks once if needed)
 
 ## Structure
 
 ```text
-dw-llms-txt.php          Bootstrap
-includes/
+llms-txt.php             Bootstrap
+classes/
   class-plugin.php       Wiring
   class-endpoint.php     /llms.txt response
   class-document.php     Content → markdown body

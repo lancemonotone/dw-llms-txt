@@ -2,10 +2,10 @@
 /**
  * Public /llms.txt response.
  *
- * @package DW\LlmsTxt
+ * @package LlmsTxt
  */
 
-namespace DW\LlmsTxt;
+namespace LlmsTxt;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Endpoint {
 
 	public static function register_rewrite(): void {
-		add_rewrite_rule( '^llms\.txt$', 'index.php?dw_llms_txt=1', 'top' );
+		add_rewrite_rule( '^llms\.txt$', 'index.php?llms_txt=1', 'top' );
 	}
 
 	public function register(): void {
@@ -28,7 +28,7 @@ final class Endpoint {
 	 * @return array<int, string>
 	 */
 	public function query_vars( array $vars ): array {
-		$vars[] = 'dw_llms_txt';
+		$vars[] = 'llms_txt';
 
 		return $vars;
 	}
@@ -41,12 +41,12 @@ final class Endpoint {
 		status_header( 200 );
 		nocache_headers();
 		header( 'Content-Type: text/plain; charset=utf-8' );
-		echo Cache::get();
+		echo Cache::get(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text document body.
 		exit;
 	}
 
 	private function is_llms_request(): bool {
-		if ( (string) get_query_var( 'dw_llms_txt' ) === '1' ) {
+		if ( (string) get_query_var( 'llms_txt' ) === '1' ) {
 			return true;
 		}
 

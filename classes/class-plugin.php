@@ -2,10 +2,10 @@
 /**
  * Bootstrap.
  *
- * @package DW\LlmsTxt
+ * @package LlmsTxt
  */
 
-namespace DW\LlmsTxt;
+namespace LlmsTxt;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -34,7 +34,7 @@ final class Plugin {
 		add_action( 'edited_term', array( Cache::class, 'forget' ) );
 		add_action( 'delete_term', array( Cache::class, 'forget' ) );
 		add_action( 'update_option_blogdescription', array( Cache::class, 'forget' ) );
-		add_action( 'update_option_wpseo_titles', array( Cache::class, 'forget' ) );
+		add_action( 'update_option_blogname', array( Cache::class, 'forget' ) );
 	}
 
 	public function forget_on_post( int $post_id ): void {

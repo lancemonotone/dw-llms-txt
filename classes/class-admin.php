@@ -1,11 +1,11 @@
 <?php
 /**
- * Preview screen and editor notices.
+ * Preview screen and notices.
  *
- * @package DW\LlmsTxt
+ * @package LlmsTxt
  */
 
-namespace DW\LlmsTxt;
+namespace LlmsTxt;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -23,7 +23,7 @@ final class Admin {
 			'llms.txt',
 			'llms.txt',
 			'manage_options',
-			'dw-llms-txt',
+			'llms-txt',
 			array( $this, 'render' )
 		);
 	}
@@ -50,24 +50,8 @@ final class Admin {
 
 		if ( file_exists( ABSPATH . 'llms.txt' ) ) {
 			echo '<div class="notice notice-warning"><p>';
-			echo esc_html( 'A physical llms.txt file is in the site root. The web server will serve that file instead of this plugin. Remove it after Yoast llms.txt is turned off.' );
+			echo esc_html( 'A physical llms.txt file is in the site root. The web server may serve that file instead of this plugin. Remove it to use the dynamic endpoint.' );
 			echo '</p></div>';
 		}
-
-		if ( $this->yoast_llms_enabled() ) {
-			echo '<div class="notice notice-warning"><p>';
-			echo esc_html( 'Yoast llms.txt is still enabled. Turn it off in Yoast SEO so it does not write a new root llms.txt file.' );
-			echo '</p></div>';
-		}
-	}
-
-	private function yoast_llms_enabled(): bool {
-		$option = get_option( 'wpseo_llmstxt' );
-
-		if ( ! is_array( $option ) || ! array_key_exists( 'enable_llms_txt', $option ) ) {
-			return false;
-		}
-
-		return filter_var( $option['enable_llms_txt'], FILTER_VALIDATE_BOOLEAN );
 	}
 }
