@@ -27,10 +27,10 @@ foreach ( glob( LLMS_TXT_DIR . 'classes/class.*.php' ) as $filename ) {
 }
 
 /**
- * Activation: register rewrite, flush rules.
+ * Activation: register rewrite (WP_Rewrite exists in this hook), then flush.
  */
 function llms_txt_activate(): void {
-	\Llms_Txt\Endpoint::register_rewrite();
+	add_rewrite_rule( \Llms_Txt\Endpoint::RULE_REGEX, \Llms_Txt\Endpoint::RULE_QUERY, 'top' );
 	flush_rewrite_rules();
 }
 

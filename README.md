@@ -7,7 +7,7 @@ Author: Rus Miller.
 ## What it does
 
 - Registers a public `/llms.txt` endpoint (rewrite + `REQUEST_URI` fallback)
-- Builds plain-text sections from WordPress content (primary menu pages, public CPT archives)
+- Builds plain-text sections from WordPress content (primary menu navigation, public CPT archives)
 - Caches the rendered body in a transient (invalidated on content/menu changes)
 - Settings → **llms.txt** preview screen
 - Extensible via `llms_txt_document_sections` and `llms_txt_menu_locations` filters
@@ -25,11 +25,11 @@ llms-txt.php           Bootstrap (glob-load classes)
 classes/
   class.endpoint.php   /llms.txt response
   class.document.php   Content → markdown body
-  class.cache.php      Transient cache + invalidation
+  class.cache.php      Transient cache + invalidation (owned by Endpoint)
   class.admin.php      Admin preview + notices
 ```
 
-Classes self-wire with `new ClassName();` at the bottom of each file (same pattern as RM Audio Playlist).
+`Endpoint` and `Admin` self-wire with `new ClassName();` at file bottom. `Cache` is constructed by `Endpoint` (one instance, invalidation hooks included).
 
 ## License
 

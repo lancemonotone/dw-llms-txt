@@ -22,16 +22,16 @@ final class Cache {
 
 	public function __construct() {
 		add_action( 'save_post', array( $this, 'forget_on_post' ) );
-		add_action( 'deleted_post', array( self::class, 'forget' ) );
-		add_action( 'wp_update_nav_menu', array( self::class, 'forget' ) );
-		add_action( 'created_term', array( self::class, 'forget' ) );
-		add_action( 'edited_term', array( self::class, 'forget' ) );
-		add_action( 'delete_term', array( self::class, 'forget' ) );
-		add_action( 'update_option_blogdescription', array( self::class, 'forget' ) );
-		add_action( 'update_option_blogname', array( self::class, 'forget' ) );
+		add_action( 'deleted_post', array( $this, 'forget' ) );
+		add_action( 'wp_update_nav_menu', array( $this, 'forget' ) );
+		add_action( 'created_term', array( $this, 'forget' ) );
+		add_action( 'edited_term', array( $this, 'forget' ) );
+		add_action( 'delete_term', array( $this, 'forget' ) );
+		add_action( 'update_option_blogdescription', array( $this, 'forget' ) );
+		add_action( 'update_option_blogname', array( $this, 'forget' ) );
 	}
 
-	public static function get(): string {
+	public function get(): string {
 		$cached = get_transient( self::KEY );
 
 		if ( is_string( $cached ) && $cached !== '' ) {
@@ -44,7 +44,7 @@ final class Cache {
 		return $body;
 	}
 
-	public static function forget(): void {
+	public function forget(): void {
 		delete_transient( self::KEY );
 	}
 
@@ -53,8 +53,6 @@ final class Cache {
 			return;
 		}
 
-		self::forget();
+		$this->forget();
 	}
 }
-
-new Cache();

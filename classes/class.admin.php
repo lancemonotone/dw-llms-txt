@@ -38,14 +38,16 @@ final class Admin {
 			return;
 		}
 
-		$public_url = home_url( '/llms.txt' );
-		$body       = ( new Document() )->render();
+		$url  = esc_url( home_url( '/llms.txt' ) );
+		$body = esc_textarea( ( new Document() )->render() );
 
-		echo '<div class="wrap">';
-		echo '<h1>llms.txt</h1>';
-		echo '<p><a href="' . esc_url( $public_url ) . '">View public llms.txt</a></p>';
-		echo '<textarea readonly="readonly" rows="28" class="large-text code">' . esc_textarea( $body ) . '</textarea>';
-		echo '</div>';
+		echo <<<HTML
+<div class="wrap">
+	<h1>llms.txt</h1>
+	<p><a href="{$url}">View public llms.txt</a></p>
+	<textarea readonly="readonly" rows="28" class="large-text code">{$body}</textarea>
+</div>
+HTML;
 	}
 
 	public function notices(): void {
@@ -53,11 +55,17 @@ final class Admin {
 			return;
 		}
 
-		if ( file_exists( ABSPATH . 'llms.txt' ) ) {
-			echo '<div class="notice notice-warning"><p>';
-			echo esc_html( 'A physical llms.txt file is in the site root. The web server may serve that file instead of this plugin. Remove it to use the dynamic endpoint.' );
-			echo '</p></div>';
+		if ( ! file_exists( ABSPATH . 'llms.txt' ) ) {
+			return;
 		}
+
+		$message = esc_html(
+			'A physical llms.txt file is in the site root. The web server may serve that file instead of this plugin. Remove it to use the dynamic endpoint.'
+		);
+
+		echo <<<HTML
+<div class="notice notice-warning"><p>{$message}</p></div>
+HTML;
 	}
 }
 

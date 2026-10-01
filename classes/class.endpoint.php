@@ -18,14 +18,23 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Endpoint {
 
+	public const RULE_REGEX = '^llms\.txt$';
+
+	public const RULE_QUERY = 'index.php?llms_txt=1';
+
+	private Cache $cache;
+
 	public function __construct() {
-		add_action( 'init', array( self::class, 'register_rewrite' ) );
+		$this->cache = new Cache();
+
+		// Never call add_rewrite_rule() at construct: plugins load before $wp_rewrite exists.
+		add_action( 'init', array( $this, 'register_rewrite' ) );
 		add_filter( 'query_vars', array( $this, 'query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'maybe_render' ) );
 	}
 
-	public static function register_rewrite(): void {
-		add_rewrite_rule( '^llms\.txt$', 'index.php?llms_txt=1', 'top' );
+	public function register_rewrite(): void {
+		add_rewrite_rule( self::RULE_REGEX, self::RULE_QUERY, 'top' );
 	}
 
 	/**
@@ -46,7 +55,7 @@ final class Endpoint {
 		status_header( 200 );
 		nocache_headers();
 		header( 'Content-Type: text/plain; charset=utf-8' );
-		echo Cache::get(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text document body.
+		echo $this->cache->get(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text document body.
 		exit;
 	}
 

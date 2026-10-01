@@ -21,7 +21,7 @@ final class Document {
 	public function render(): string {
 		$sections = array(
 			$this->intro(),
-			$this->section( 'Pages', $this->pages() ),
+			$this->section( 'Navigation', $this->navigation() ),
 			$this->section( 'Content types', $this->content_types() ),
 			$this->section( 'Optional', $this->optional() ),
 		);
@@ -102,9 +102,11 @@ final class Document {
 	}
 
 	/**
+	 * Primary menu destinations: pages, public CPTs, archives, terms, same-host custom links.
+	 *
 	 * @return array<int, string>
 	 */
-	private function pages(): array {
+	private function navigation(): array {
 		$menu_id = $this->primary_menu_id();
 
 		if ( $menu_id <= 0 ) {
@@ -121,7 +123,7 @@ final class Document {
 		$seen  = array();
 
 		foreach ( $items as $item ) {
-			$row = $this->menu_page( $item );
+			$row = $this->menu_item( $item );
 
 			if ( $row === null || isset( $seen[ $row['url'] ] ) ) {
 				continue;
@@ -142,7 +144,7 @@ final class Document {
 		}
 
 		/**
-		 * Preferred theme_location slugs for the Pages section.
+		 * Preferred theme_location slugs for the Navigation section.
 		 *
 		 * @param list<string> $slugs
 		 */
@@ -173,62 +175,134 @@ final class Document {
 	 * @param object $item Nav menu item.
 	 * @return array{title: string, url: string, description: string}|null
 	 */
-	private function menu_page( object $item ): ?array {
-		$url = isset( $item->url ) ? (string) $item->url : '';
+	private function menu_item( object $item ): ?array {
+		$type  = isset( $item->type ) ? (string) $item->type : '';
+		$title = isset( $item->title ) ? trim( (string) $item->title ) : '';
+		$url   = isset( $item->url ) ? (string) $item->url : '';
+
+		if ( $type === 'post_type' ) {
+			return $this->menu_post( (int) $item->object_id, $title );
+		}
+
+		if ( $type === 'post_type_archive' ) {
+			$post_type = isset( $item->object ) ? (string) $item->object : '';
+			$link      = $post_type !== '' ? get_post_type_archive_link( $post_type ) : false;
+
+			if ( ! is_string( $link ) || $link === '' ) {
+				return null;
+			}
+
+			$object = get_post_type_object( $post_type );
+			$label  = ( $object && isset( $object->labels->name ) ) ? (string) $object->labels->name : $post_type;
+
+			return array(
+				'title'       => $title !== '' ? $title : $label,
+				'url'         => $link,
+				'description' => '',
+			);
+		}
+
+		if ( $type === 'taxonomy' ) {
+			$taxonomy = isset( $item->object ) ? (string) $item->object : '';
+			$term     = get_term( (int) $item->object_id, $taxonomy );
+
+			if ( ! $term instanceof \WP_Term ) {
+				return null;
+			}
+
+			$link = get_term_link( $term );
+
+			if ( is_wp_error( $link ) || ! is_string( $link ) || $link === '' ) {
+				return null;
+			}
+
+			return array(
+				'title'       => $title !== '' ? $title : $term->name,
+				'url'         => $link,
+				'description' => trim( wp_strip_all_tags( $term->description ) ),
+			);
+		}
 
 		if ( $url === '' ) {
 			return null;
 		}
 
-		$page_id = 0;
-
-		if ( ( $item->type ?? '' ) === 'post_type' && ( $item->object ?? '' ) === 'page' ) {
-			$page_id = (int) $item->object_id;
-		} else {
-			$resolved = url_to_postid( $url );
-
-			if ( $resolved && get_post_type( $resolved ) === 'page' ) {
-				$page_id = $resolved;
-			}
-		}
-
-		if ( $page_id > 0 ) {
-			$page = get_post( $page_id );
-
-			if ( ! $page instanceof \WP_Post || $page->post_status !== 'publish' ) {
-				return null;
-			}
-
-			$permalink = get_permalink( $page );
-
-			if ( ! is_string( $permalink ) || $permalink === '' ) {
-				return null;
-			}
-
-			$title = isset( $item->title ) ? trim( (string) $item->title ) : '';
-
+		if ( $this->is_front_url( $url ) ) {
 			return array(
-				'title'       => $title !== '' ? $title : $page->post_title,
-				'url'         => $permalink,
-				'description' => $this->excerpt( $page->ID ),
+				'title'       => $title !== '' ? $title : get_bloginfo( 'name' ),
+				'url'         => home_url( '/' ),
+				'description' => '',
 			);
 		}
 
-		if ( ! $this->is_front_url( $url ) ) {
+		if ( ! $this->is_same_host( $url ) ) {
 			return null;
 		}
 
-		$title = isset( $item->title ) ? trim( (string) $item->title ) : '';
+		$resolved = url_to_postid( $url );
+
+		if ( $resolved > 0 ) {
+			$row = $this->menu_post( $resolved, $title );
+
+			if ( $row !== null ) {
+				return $row;
+			}
+		}
 
 		return array(
-			'title'       => $title !== '' ? $title : get_bloginfo( 'name' ),
-			'url'         => home_url( '/' ),
+			'title'       => $title !== '' ? $title : $url,
+			'url'         => $url,
 			'description' => '',
+		);
+	}
+
+	/**
+	 * @return array{title: string, url: string, description: string}|null
+	 */
+	private function menu_post( int $post_id, string $menu_title ): ?array {
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || $post->post_status !== 'publish' ) {
+			return null;
+		}
+
+		$object = get_post_type_object( $post->post_type );
+
+		if ( ! $object instanceof \WP_Post_Type || ! $object->public ) {
+			return null;
+		}
+
+		$permalink = get_permalink( $post );
+
+		if ( ! is_string( $permalink ) || $permalink === '' ) {
+			return null;
+		}
+
+		return array(
+			'title'       => $menu_title !== '' ? $menu_title : $post->post_title,
+			'url'         => $permalink,
+			'description' => $this->excerpt( $post->ID ),
 		);
 	}
 
 	private function is_front_url( string $url ): bool {
 		return untrailingslashit( $url ) === untrailingslashit( home_url( '/' ) );
+	}
+
+	private function is_same_host( string $url ): bool {
+		$parsed = wp_parse_url( $url );
+
+		if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+			return true;
+		}
+
+		$home = wp_parse_url( home_url( '/' ) );
+
+		if ( ! is_array( $home ) || empty( $home['host'] ) ) {
+			return false;
+		}
+
+		return strtolower( (string) $home['host'] ) === strtolower( (string) $parsed['host'] );
 	}
 
 	/**
