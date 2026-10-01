@@ -1,6 +1,6 @@
 <?php
 /**
- * Settings screen, preview, and notices.
+ * Options page UI, preview, and notices.
  *
  * @package Llms_Txt
  */
@@ -14,54 +14,48 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Settings → llms.txt.
+ * Settings → llms.txt screen markup.
  */
 final class Admin {
 
-	private Options $options;
-
+	/**
+	 * Hooks page UI and admin notices.
+	 */
 	public function __construct() {
-		$this->options = new Options();
-
-		add_action( 'admin_menu', array( $this, 'menu' ) );
+		add_action( 'llms_txt_options_page', array( $this, 'render' ) );
 		add_action( 'admin_notices', array( $this, 'notices' ) );
 	}
 
-	public function menu(): void {
-		add_options_page(
-			'llms.txt',
-			'llms.txt',
-			'manage_options',
-			'llms-txt',
-			array( $this, 'render' )
-		);
-	}
-
+	/**
+	 * Renders the settings form and live document preview.
+	 */
 	public function render(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		if ( isset( $_GET['settings-updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin notice flag from options.php redirect.
+		if ( isset( $_GET['settings-updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- flag from options.php redirect.
 			wp_cache_delete( Options::OPTION, 'options' );
 			wp_cache_delete( 'alloptions', 'options' );
 			delete_transient( 'llms_txt_body' );
 		}
 
-		$settings = $this->options->all();
-		$menus    = $this->options->assigned_menu_locations();
-		$catalog  = $this->options->catalog_post_types();
+		$config   = new Config();
+		$catalog  = new Catalog();
+		$settings = $config->all();
+		$menus    = $catalog->assigned_menu_locations();
+		$types    = $catalog->post_types();
 		$selected = $settings['post_types'];
 
 		if ( $selected === null ) {
-			$selected = array_keys( $catalog );
+			$selected = array_keys( $types );
 		}
 
 		$url  = esc_url( home_url( '/llms.txt' ) );
 		$body = esc_textarea( ( new Document() )->render() );
 
 		$menu_options = $this->menu_options_html( $menus, $settings['menu_location'] );
-		$type_checks  = $this->post_type_checks_html( $catalog, $selected );
+		$type_checks  = $this->post_type_checks_html( $types, $selected );
 		$sitemap_on   = $settings['include_sitemap'] ? ' checked="checked"' : '';
 		$option_name  = esc_attr( Options::OPTION );
 
@@ -75,7 +69,7 @@ final class Admin {
 	<form method="post" action="options.php">
 HTML;
 
-		settings_fields( Settings::GROUP );
+		settings_fields( Options::GROUP );
 
 		echo <<<HTML
 		<input type="hidden" name="{$option_name}[configured]" value="1" />
@@ -86,7 +80,7 @@ HTML;
 					<select name="{$option_name}[menu_location]" id="llms-txt-menu-location">
 						{$menu_options}
 					</select>
-					<p class="description">Which assigned theme menu feeds the Navigation section. Auto picks the first preferred location (filterable).</p>
+					<p class="description">Menu used for the Navigation section. Auto uses preferred theme locations.</p>
 				</td>
 			</tr>
 			<tr>
@@ -96,7 +90,7 @@ HTML;
 						<legend class="screen-reader-text">Content types</legend>
 						{$type_checks}
 					</fieldset>
-					<p class="description">Only types with a public archive URL are listed. Uncheck to omit from Content types.</p>
+					<p class="description">Public post types with an archive URL.</p>
 				</td>
 			</tr>
 			<tr>
@@ -117,14 +111,16 @@ HTML;
 	</form>
 
 	<h2>Preview</h2>
-	<p class="description">Updates after you save. Unchecking the sitemap or a listed content type should change this text.</p>
 	<textarea readonly="readonly" rows="28" class="large-text code">{$body}</textarea>
 </div>
 HTML;
 	}
 
 	/**
-	 * @param array<string, string> $menus
+	 * Builds the menu location select options markup.
+	 *
+	 * @param array<string, string> $menus   Location slug => label.
+	 * @param string                $current Selected location slug.
 	 */
 	private function menu_options_html( array $menus, string $current ): string {
 		$auto_selected = $current === '' ? ' selected="selected"' : '';
@@ -139,8 +135,10 @@ HTML;
 	}
 
 	/**
-	 * @param array<string, string> $catalog
-	 * @param list<string>          $selected
+	 * Builds content-type checkbox markup.
+	 *
+	 * @param array<string, string> $catalog  Slug => label.
+	 * @param list<string>          $selected Checked slugs.
 	 */
 	private function post_type_checks_html( array $catalog, array $selected ): string {
 		if ( $catalog === array() ) {
@@ -162,6 +160,9 @@ HTML;
 		return $html;
 	}
 
+	/**
+	 * Warns when a physical root llms.txt file may override the plugin endpoint.
+	 */
 	public function notices(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;

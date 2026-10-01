@@ -14,16 +14,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Content → markdown body.
+ * Assembles the llms.txt document body.
  */
 final class Document {
 
-	private Options $options;
+	private Config $config;
 
+	private Catalog $catalog;
+
+	/**
+	 * Loads config and catalogs for section building.
+	 */
 	public function __construct() {
-		$this->options = new Options();
+		$this->config  = new Config();
+		$this->catalog = new Catalog();
 	}
 
+	/**
+	 * Renders the full markdown document.
+	 */
 	public function render(): string {
 		$sections = array(
 			$this->intro(),
@@ -33,7 +42,7 @@ final class Document {
 		);
 
 		/**
-		 * Filter document sections before join.
+		 * Filters document sections before join.
 		 *
 		 * @param list<string> $sections Markdown sections (may be empty strings).
 		 */
@@ -55,6 +64,9 @@ final class Document {
 		return implode( "\n\n", $sections ) . "\n";
 	}
 
+	/**
+	 * Site title and tagline intro block.
+	 */
 	private function intro(): string {
 		$title       = $this->escape_md( get_bloginfo( 'name' ) );
 		$lines       = array( '# ' . $title );
@@ -69,7 +81,9 @@ final class Document {
 	}
 
 	/**
-	 * @param array<int, string> $lines
+	 * Formats a markdown section, or empty string when there are no lines.
+	 *
+	 * @param array<int, string> $lines Bullet lines for the section.
 	 */
 	private function section( string $heading, array $lines ): string {
 		if ( $lines === array() ) {
@@ -79,6 +93,9 @@ final class Document {
 		return '## ' . $heading . "\n" . implode( "\n", $lines );
 	}
 
+	/**
+	 * Formats one markdown link line.
+	 */
 	private function link_line( string $title, string $url, string $description = '' ): string {
 		$line = '- [' . $this->escape_md( $title ) . '](' . $url . ')';
 
@@ -89,6 +106,9 @@ final class Document {
 		return $line;
 	}
 
+	/**
+	 * Escapes text for use inside markdown link labels.
+	 */
 	private function escape_md( string $text ): string {
 		$text = wp_strip_all_tags( $text );
 		$text = preg_replace( '/\s+/', ' ', $text );
@@ -97,6 +117,9 @@ final class Document {
 		return trim( str_replace( array( '\\', '[', ']' ), array( '\\\\', '\[', '\]' ), $text ) );
 	}
 
+	/**
+	 * Plain-text excerpt for a post, if present.
+	 */
 	private function excerpt( int $post_id ): string {
 		$post = get_post( $post_id );
 
@@ -108,7 +131,7 @@ final class Document {
 	}
 
 	/**
-	 * Primary menu destinations: pages, public CPTs, archives, terms, same-host custom links.
+	 * Navigation section lines from the configured menu.
 	 *
 	 * @return array<int, string>
 	 */
@@ -142,6 +165,9 @@ final class Document {
 		return $lines;
 	}
 
+	/**
+	 * Resolves the menu ID from settings or preferred theme locations.
+	 */
 	private function primary_menu_id(): int {
 		$locations = get_nav_menu_locations();
 
@@ -149,14 +175,14 @@ final class Document {
 			return 0;
 		}
 
-		$chosen = $this->options->menu_location();
+		$chosen = $this->config->menu_location();
 
 		if ( $chosen !== '' && ! empty( $locations[ $chosen ] ) ) {
 			return (int) $locations[ $chosen ];
 		}
 
 		/**
-		 * Preferred theme_location slugs for the Navigation section (when menu is Auto).
+		 * Preferred theme_location slugs when menu location is Auto.
 		 *
 		 * @param list<string> $slugs
 		 */
@@ -184,6 +210,8 @@ final class Document {
 	}
 
 	/**
+	 * Maps one nav menu item to a link row, or null when excluded.
+	 *
 	 * @param object $item Nav menu item.
 	 * @return array{title: string, url: string, description: string}|null
 	 */
@@ -269,6 +297,8 @@ final class Document {
 	}
 
 	/**
+	 * Maps a published public post to a link row.
+	 *
 	 * @return array{title: string, url: string, description: string}|null
 	 */
 	private function menu_post( int $post_id, string $menu_title ): ?array {
@@ -297,10 +327,16 @@ final class Document {
 		);
 	}
 
+	/**
+	 * Whether a URL is the site front page.
+	 */
 	private function is_front_url( string $url ): bool {
 		return untrailingslashit( $url ) === untrailingslashit( home_url( '/' ) );
 	}
 
+	/**
+	 * Whether a URL is same-host or relative.
+	 */
 	private function is_same_host( string $url ): bool {
 		$parsed = wp_parse_url( $url );
 
@@ -318,7 +354,7 @@ final class Document {
 	}
 
 	/**
-	 * Selected public post types with archives (plus posts when a Posts page is set).
+	 * Content types section lines for selected (or all eligible) archives.
 	 *
 	 * @return array<int, string>
 	 */
@@ -336,7 +372,7 @@ final class Document {
 			return array();
 		}
 
-		$allowed = $this->options->post_types();
+		$allowed = $this->config->post_types();
 
 		foreach ( $post_types as $post_type => $object ) {
 			if ( ! is_string( $post_type ) || ! $object instanceof \WP_Post_Type ) {
@@ -361,8 +397,11 @@ final class Document {
 		return $lines;
 	}
 
+	/**
+	 * One content-type archive link line, or null when no archive URL.
+	 */
 	private function archive_line( string $post_type, \WP_Post_Type $object ): ?string {
-		$url = $this->options->archive_url( $post_type, $object );
+		$url = $this->catalog->archive_url( $post_type, $object );
 
 		if ( $url === '' ) {
 			return null;
@@ -374,10 +413,12 @@ final class Document {
 	}
 
 	/**
+	 * Optional section lines (sitemap when enabled).
+	 *
 	 * @return array<int, string>
 	 */
 	private function optional(): array {
-		if ( ! $this->options->include_sitemap() ) {
+		if ( ! $this->config->include_sitemap() ) {
 			return array();
 		}
 

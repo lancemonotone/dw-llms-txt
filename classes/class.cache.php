@@ -14,12 +14,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Transient cache + invalidation hooks.
+ * Document body cache and invalidation.
  */
 final class Cache {
 
 	private const KEY = 'llms_txt_body';
 
+	/**
+	 * Registers invalidation hooks.
+	 */
 	public function __construct() {
 		add_action( 'save_post', array( $this, 'forget_on_post' ) );
 		add_action( 'deleted_post', array( $this, 'forget' ) );
@@ -32,7 +35,10 @@ final class Cache {
 		add_action( 'llms_txt_settings_updated', array( $this, 'forget' ) );
 	}
 
-	public function get(): string {
+	/**
+	 * Returns the cached body, rendering and storing it when missing.
+	 */
+	public static function get(): string {
 		$cached = get_transient( self::KEY );
 
 		if ( is_string( $cached ) && $cached !== '' ) {
@@ -45,10 +51,18 @@ final class Cache {
 		return $body;
 	}
 
+	/**
+	 * Deletes the cached body.
+	 */
 	public function forget(): void {
 		delete_transient( self::KEY );
 	}
 
+	/**
+	 * Clears cache after a non-revision post save.
+	 *
+	 * @param int $post_id Saved post ID.
+	 */
 	public function forget_on_post( int $post_id ): void {
 		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
 			return;
@@ -57,3 +71,5 @@ final class Cache {
 		$this->forget();
 	}
 }
+
+new Cache();

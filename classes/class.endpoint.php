@@ -1,6 +1,6 @@
 <?php
 /**
- * Public /llms.txt response.
+ * Public /llms.txt endpoint.
  *
  * @package Llms_Txt
  */
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Rewrite + plain-text response for /llms.txt.
+ * Rewrite registration and plain-text response.
  */
 final class Endpoint {
 
@@ -22,23 +22,26 @@ final class Endpoint {
 
 	public const RULE_QUERY = 'index.php?llms_txt=1';
 
-	private Cache $cache;
-
+	/**
+	 * Hooks rewrite, query var, and template response.
+	 */
 	public function __construct() {
-		$this->cache = new Cache();
-
-		// Never call add_rewrite_rule() at construct: plugins load before $wp_rewrite exists.
 		add_action( 'init', array( $this, 'register_rewrite' ) );
 		add_filter( 'query_vars', array( $this, 'query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'maybe_render' ) );
 	}
 
+	/**
+	 * Adds the /llms.txt rewrite rule.
+	 */
 	public function register_rewrite(): void {
 		add_rewrite_rule( self::RULE_REGEX, self::RULE_QUERY, 'top' );
 	}
 
 	/**
-	 * @param array<int, string> $vars
+	 * Registers the llms_txt query var.
+	 *
+	 * @param array<int, string> $vars Public query vars.
 	 * @return array<int, string>
 	 */
 	public function query_vars( array $vars ): array {
@@ -47,6 +50,9 @@ final class Endpoint {
 		return $vars;
 	}
 
+	/**
+	 * Serves the cached document body when this request is /llms.txt.
+	 */
 	public function maybe_render(): void {
 		if ( ! $this->is_llms_request() ) {
 			return;
@@ -55,10 +61,13 @@ final class Endpoint {
 		status_header( 200 );
 		nocache_headers();
 		header( 'Content-Type: text/plain; charset=utf-8' );
-		echo $this->cache->get(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text document body.
+		echo Cache::get(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- plain-text document body.
 		exit;
 	}
 
+	/**
+	 * Whether the current request targets /llms.txt.
+	 */
 	private function is_llms_request(): bool {
 		if ( (string) get_query_var( 'llms_txt' ) === '1' ) {
 			return true;

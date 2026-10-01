@@ -22,33 +22,12 @@ define( 'LLMS_TXT_FILE', __FILE__ );
 define( 'LLMS_TXT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LLMS_TXT_URL', plugin_dir_url( __FILE__ ) );
 
-$llms_txt_files = glob( LLMS_TXT_DIR . 'classes/class.*.php' );
-if ( ! is_array( $llms_txt_files ) ) {
-	$llms_txt_files = array();
-}
-
-usort(
-	$llms_txt_files,
-	static function ( string $a, string $b ): int {
-		$an = basename( $a );
-		$bn = basename( $b );
-		// Options has no hooks; other classes may construct it at load time.
-		if ( 'class.options.php' === $an ) {
-			return -1;
-		}
-		if ( 'class.options.php' === $bn ) {
-			return 1;
-		}
-		return strcmp( $an, $bn );
-	}
-);
-
-foreach ( $llms_txt_files as $filename ) {
+foreach ( glob( LLMS_TXT_DIR . 'classes/class.*.php' ) as $filename ) {
 	require_once $filename;
 }
 
 /**
- * Activation: register rewrite (WP_Rewrite exists in this hook), then flush.
+ * Registers the rewrite rule and flushes permalinks.
  */
 function llms_txt_activate(): void {
 	add_rewrite_rule( \Llms_Txt\Endpoint::RULE_REGEX, \Llms_Txt\Endpoint::RULE_QUERY, 'top' );
@@ -56,7 +35,7 @@ function llms_txt_activate(): void {
 }
 
 /**
- * Deactivation: flush rewrite rules.
+ * Flushes permalinks on deactivation.
  */
 function llms_txt_deactivate(): void {
 	flush_rewrite_rules();

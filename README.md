@@ -21,17 +21,18 @@ Author: Rus Miller.
 ## Structure
 
 ```text
-llms-txt.php           Bootstrap (glob-load classes)
+llms-txt.php           Bootstrap (glob classes/)
 classes/
   class.endpoint.php   /llms.txt response
   class.document.php   Content → markdown body
-  class.options.php    Settings read helpers
-  class.settings.php   Settings API sanitize/register
+  class.config.php     Stored option reads
+  class.catalog.php    Post-type / menu / archive discovery
+  class.options.php    Options page + Settings API register/sanitize
   class.cache.php      Transient cache + invalidation
-  class.admin.php      Settings UI + preview + notices
+  class.admin.php      Options page UI + preview + notices
 ```
 
-`Endpoint`, `Admin`, and `Settings` self-wire with `new ClassName();` at file bottom. `Cache` is constructed by `Endpoint`. `Options` / `Document` are constructed as needed (no hooks on construct).
+Classes that register hooks self-wire with `new ClassName();` at file bottom. Constructors only add hooks; collaborators are created inside hooked methods (or via `llms_txt_options_page`). `Config`, `Catalog`, and `Document` are plain helpers with no self-wire.
 
 ## License
 
