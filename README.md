@@ -32,7 +32,7 @@ classes/
   class.admin.php      Options page UI + preview + notices
 ```
 
-Classes that register hooks self-wire with `new ClassName();` at file bottom. Constructors only add hooks; collaborators are created inside hooked methods (or via `llms_txt_options_page`). `Config`, `Catalog`, and `Document` are plain helpers with no self-wire.
+Hook classes bootstrap themselves (`new ClassName()` at the bottom of the file). `Config`, `Catalog`, and `Document` are helpers only.
 
 ## License
 

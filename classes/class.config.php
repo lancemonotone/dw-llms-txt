@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Reads saved plugin options. No hooks.
+ * Reads saved plugin options.
  */
 final class Config {
 

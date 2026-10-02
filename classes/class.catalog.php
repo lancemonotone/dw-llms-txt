@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Discoverable post types, archives, and assigned menus. No hooks.
+ * Discoverable post types, archives, and assigned menus.
  */
 final class Catalog {
 
