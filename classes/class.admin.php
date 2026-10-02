@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Options page UI, preview, and notices.
  *
@@ -9,7 +10,7 @@ declare(strict_types=1);
 
 namespace Llms_Txt;
 
-if ( ! defined( 'ABSPATH' ) ) {
+if (! defined('ABSPATH')) {
 	exit;
 }
 
@@ -18,26 +19,23 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class Admin {
 
-	/**
-	 * Hooks page UI and admin notices.
-	 */
 	public function __construct() {
-		add_action( 'llms_txt_options_page', array( $this, 'render' ) );
-		add_action( 'admin_notices', array( $this, 'notices' ) );
+		add_action('llms_txt_options_page', array($this, 'render'));
+		add_action('admin_notices', array($this, 'notices'));
 	}
 
 	/**
-	 * Renders the settings form and live document preview.
+	 * Settings form and live document preview.
 	 */
 	public function render(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if (! current_user_can('manage_options')) {
 			return;
 		}
 
-		if ( isset( $_GET['settings-updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- flag from options.php redirect.
-			wp_cache_delete( Options::OPTION, 'options' );
-			wp_cache_delete( 'alloptions', 'options' );
-			delete_transient( 'llms_txt_body' );
+		if (isset($_GET['settings-updated'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- flag from options.php redirect.
+			wp_cache_delete(Options::OPTION, 'options');
+			wp_cache_delete('alloptions', 'options');
+			delete_transient('llms_txt_body');
 		}
 
 		$config   = new Config();
@@ -47,19 +45,19 @@ final class Admin {
 		$types    = $catalog->post_types();
 		$selected = $settings['post_types'];
 
-		if ( $selected === null ) {
-			$selected = array_keys( $types );
+		if ($selected === null) {
+			$selected = array_keys($types);
 		}
 
-		$url  = esc_url( home_url( '/llms.txt' ) );
-		$body = esc_textarea( ( new Document() )->render() );
+		$url  = esc_url(home_url('/llms.txt'));
+		$body = esc_textarea((new Document())->render());
 
-		$menu_options = $this->menu_options_html( $menus, $settings['menu_location'] );
-		$type_checks  = $this->post_type_checks_html( $types, $selected );
+		$menu_options = $this->menu_options_html($menus, $settings['menu_location']);
+		$type_checks  = $this->post_type_checks_html($types, $selected);
 		$sitemap_on   = $settings['include_sitemap'] ? ' checked="checked"' : '';
-		$option_name  = esc_attr( Options::OPTION );
+		$option_name  = esc_attr(Options::OPTION);
 
-		settings_errors( Options::OPTION );
+		settings_errors(Options::OPTION);
 
 		echo <<<HTML
 <div class="wrap">
@@ -69,7 +67,7 @@ final class Admin {
 	<form method="post" action="options.php">
 HTML;
 
-		settings_fields( Options::GROUP );
+		settings_fields(Options::GROUP);
 
 		echo <<<HTML
 		<input type="hidden" name="{$option_name}[configured]" value="1" />
@@ -105,7 +103,7 @@ HTML;
 		</table>
 HTML;
 
-		submit_button( 'Save settings' );
+		submit_button('Save settings');
 
 		echo <<<HTML
 	</form>
@@ -117,43 +115,45 @@ HTML;
 	}
 
 	/**
-	 * Builds the menu location select options markup.
+	 * Select options for assigned menu locations.
 	 *
 	 * @param array<string, string> $menus   Location slug => label.
 	 * @param string                $current Selected location slug.
+	 * @return string HTML <option> list.
 	 */
-	private function menu_options_html( array $menus, string $current ): string {
+	private function menu_options_html(array $menus, string $current): string {
 		$auto_selected = $current === '' ? ' selected="selected"' : '';
-		$html          = '<option value=""' . $auto_selected . '>' . esc_html( 'Auto (preferred locations)' ) . '</option>';
+		$html          = '<option value=""' . $auto_selected . '>' . esc_html('Auto (preferred locations)') . '</option>';
 
-		foreach ( $menus as $slug => $label ) {
+		foreach ($menus as $slug => $label) {
 			$selected = $slug === $current ? ' selected="selected"' : '';
-			$html    .= '<option value="' . esc_attr( $slug ) . '"' . $selected . '>' . esc_html( $label . ' (' . $slug . ')' ) . '</option>';
+			$html    .= '<option value="' . esc_attr($slug) . '"' . $selected . '>' . esc_html($label . ' (' . $slug . ')') . '</option>';
 		}
 
 		return $html;
 	}
 
 	/**
-	 * Builds content-type checkbox markup.
+	 * Checkboxes for content types.
 	 *
 	 * @param array<string, string> $catalog  Slug => label.
-	 * @param list<string>          $selected Checked slugs.
+	 * @param string[]              $selected Checked slugs.
+	 * @return string HTML checkbox list.
 	 */
-	private function post_type_checks_html( array $catalog, array $selected ): string {
-		if ( $catalog === array() ) {
-			return '<p>' . esc_html( 'No public post types available.' ) . '</p>';
+	private function post_type_checks_html(array $catalog, array $selected): string {
+		if ($catalog === array()) {
+			return '<p>' . esc_html('No public post types available.') . '</p>';
 		}
 
-		$selected_map = array_fill_keys( $selected, true );
+		$selected_map = array_fill_keys($selected, true);
 		$html         = '';
 
-		foreach ( $catalog as $slug => $label ) {
-			$checked = isset( $selected_map[ $slug ] ) ? ' checked="checked"' : '';
-			$name    = esc_attr( Options::OPTION . '[post_types][]' );
+		foreach ($catalog as $slug => $label) {
+			$checked = isset($selected_map[$slug]) ? ' checked="checked"' : '';
+			$name    = esc_attr(Options::OPTION . '[post_types][]');
 			$html   .= '<label>';
-			$html   .= '<input type="checkbox" name="' . $name . '" value="' . esc_attr( $slug ) . '"' . $checked . ' /> ';
-			$html   .= esc_html( $label . ' (' . $slug . ')' );
+			$html   .= '<input type="checkbox" name="' . $name . '" value="' . esc_attr($slug) . '"' . $checked . ' /> ';
+			$html   .= esc_html($label . ' (' . $slug . ')');
 			$html   .= '</label><br />';
 		}
 
@@ -161,14 +161,14 @@ HTML;
 	}
 
 	/**
-	 * Warns when a physical root llms.txt file may override the plugin endpoint.
+	 * Warn if a physical root llms.txt would shadow the plugin endpoint.
 	 */
 	public function notices(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if (! current_user_can('manage_options')) {
 			return;
 		}
 
-		if ( ! file_exists( ABSPATH . 'llms.txt' ) ) {
+		if (! file_exists(ABSPATH . 'llms.txt')) {
 			return;
 		}
 
