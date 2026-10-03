@@ -15,7 +15,7 @@ if (! defined('ABSPATH')) {
 }
 
 /**
- * Discoverable post types, archives, and assigned menus.
+ * Discoverable post types, taxonomies, archives, and assigned menus.
  */
 final class Catalog {
 
@@ -47,6 +47,77 @@ final class Catalog {
 
 			$label      = isset($object->labels->name) ? (string) $object->labels->name : $slug;
 			$out[$slug] = $label;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Public taxonomies.
+	 *
+	 * @return array<string, string> Slug => label.
+	 */
+	public function taxonomies(): array {
+		$objects = get_taxonomies(
+			array(
+				'public' => true,
+			),
+			'objects'
+		);
+
+		$out = array();
+
+		foreach ($objects as $slug => $object) {
+			if (! is_string($slug) || ! $object instanceof \WP_Taxonomy) {
+				continue;
+			}
+
+			$label      = isset($object->labels->name) ? (string) $object->labels->name : $slug;
+			$out[$slug] = $label;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Non-empty terms for a taxonomy (name, url, description).
+	 *
+	 * @return array<int, array{title: string, url: string, description: string}>
+	 */
+	public function terms(string $taxonomy): array {
+		if (! taxonomy_exists($taxonomy)) {
+			return array();
+		}
+
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $taxonomy,
+				'hide_empty' => true,
+			)
+		);
+
+		if (! is_array($terms)) {
+			return array();
+		}
+
+		$out = array();
+
+		foreach ($terms as $term) {
+			if (! $term instanceof \WP_Term) {
+				continue;
+			}
+
+			$link = get_term_link($term);
+
+			if (is_wp_error($link) || ! is_string($link) || $link === '') {
+				continue;
+			}
+
+			$out[] = array(
+				'title'       => $term->name,
+				'url'         => $link,
+				'description' => trim(wp_strip_all_tags($term->description)),
+			);
 		}
 
 		return $out;

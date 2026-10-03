@@ -40,18 +40,22 @@ final class Admin {
 		$config   = new Config();
 		$catalog  = new Catalog();
 		$settings = $config->all();
-		$menus    = $catalog->assigned_menu_locations();
-		$types    = $catalog->post_types();
-		$selected = $settings['post_types'];
 
-		$title         = esc_html(Plugin::DOCUMENT);
-		$url           = esc_url(home_url(Plugin::path()));
-		$body          = esc_textarea((new Document())->render());
-		$menu_field_id = esc_attr(Plugin::SLUG . '-menu-location');
-		$menu_options  = $this->menu_options_html($menus, $settings['menu_location']);
-		$type_checks   = $this->post_type_checks_html($types, $selected);
-		$sitemap_on    = $settings['include_sitemap'] ? ' checked="checked"' : '';
-		$option_name   = esc_attr(Plugin::OPTION);
+		$title            = esc_html(Plugin::DOCUMENT);
+		$url              = esc_url(home_url(Plugin::path()));
+		$body             = esc_textarea((new Document())->render());
+		$menu_field_id    = esc_attr(Plugin::SLUG . '-menu-location');
+		$types_field_id   = esc_attr(Plugin::SLUG . '-post-types');
+		$tax_field_id     = esc_attr(Plugin::SLUG . '-taxonomies');
+		$menu_options     = $this->menu_options_html($catalog->assigned_menu_locations(), $settings['menu_location']);
+		$type_options     = $this->multi_options_html($catalog->post_types(), $settings['post_types']);
+		$tax_options      = $this->multi_options_html($catalog->taxonomies(), $settings['taxonomies']);
+		$types_empty      = $catalog->post_types() === array() ? '<p>' . esc_html('No public post types available.') . '</p>' : '';
+		$tax_empty        = $catalog->taxonomies() === array() ? '<p>' . esc_html('No public taxonomies available.') . '</p>' : '';
+		$sitemap_on       = $settings['include_sitemap'] ? ' checked="checked"' : '';
+		$option_name      = esc_attr(Plugin::OPTION);
+		$types_select     = $types_empty !== '' ? $types_empty : '<select name="' . $option_name . '[post_types][]" id="' . $types_field_id . '" multiple="multiple" size="6" class="regular-text">' . $type_options . '</select>';
+		$tax_select       = $tax_empty !== '' ? $tax_empty : '<select name="' . $option_name . '[taxonomies][]" id="' . $tax_field_id . '" multiple="multiple" size="6" class="regular-text">' . $tax_options . '</select>';
 
 		settings_errors(Plugin::OPTION);
 
@@ -78,13 +82,17 @@ HTML;
 				</td>
 			</tr>
 			<tr>
-				<th scope="row">Content types</th>
+				<th scope="row"><label for="{$types_field_id}">Content types</label></th>
 				<td>
-					<fieldset>
-						<legend class="screen-reader-text">Content types</legend>
-						{$type_checks}
-					</fieldset>
-					<p class="description">Public post types with an archive URL.</p>
+					{$types_select}
+					<p class="description">Public post types with an archive URL. Hold Ctrl/Cmd to select multiple.</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="{$tax_field_id}">Taxonomies</label></th>
+				<td>
+					{$tax_select}
+					<p class="description">Public taxonomies. Each selected taxonomy becomes its own section of term links. Hold Ctrl/Cmd to select multiple.</p>
 				</td>
 			</tr>
 			<tr>
@@ -130,27 +138,19 @@ HTML;
 	}
 
 	/**
-	 * Checkboxes for content types.
+	 * Options for a multi-select.
 	 *
 	 * @param array<string, string> $catalog  Slug => label.
-	 * @param string[]              $selected Checked slugs.
-	 * @return string HTML checkbox list.
+	 * @param string[]              $selected Selected slugs.
+	 * @return string HTML <option> list.
 	 */
-	private function post_type_checks_html(array $catalog, array $selected): string {
-		if ($catalog === array()) {
-			return '<p>' . esc_html('No public post types available.') . '</p>';
-		}
-
+	private function multi_options_html(array $catalog, array $selected): string {
 		$selected_map = array_fill_keys($selected, true);
 		$html         = '';
 
 		foreach ($catalog as $slug => $label) {
-			$checked = isset($selected_map[$slug]) ? ' checked="checked"' : '';
-			$name    = esc_attr(Plugin::OPTION . '[post_types][]');
-			$html   .= '<label>';
-			$html   .= '<input type="checkbox" name="' . $name . '" value="' . esc_attr($slug) . '"' . $checked . ' /> ';
-			$html   .= esc_html($label . ' (' . $slug . ')');
-			$html   .= '</label><br />';
+			$is_selected = isset($selected_map[$slug]) ? ' selected="selected"' : '';
+			$html       .= '<option value="' . esc_attr($slug) . '"' . $is_selected . '>' . esc_html($label . ' (' . $slug . ')') . '</option>';
 		}
 
 		return $html;

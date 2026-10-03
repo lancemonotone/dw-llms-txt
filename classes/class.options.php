@@ -50,7 +50,7 @@ final class Options {
 	 * Sanitize submitted settings and bust the document cache.
 	 *
 	 * @param mixed $input Raw form input.
-	 * @return array{configured: int, menu_location: string, post_types: string[], include_sitemap: int}
+	 * @return array{configured: int, menu_location: string, post_types: string[], taxonomies: string[], include_sitemap: int}
 	 */
 	public function sanitize($input): array {
 		if (! is_array($input)) {
@@ -65,33 +65,42 @@ final class Options {
 			$menu = '';
 		}
 
-		$types_catalog = $catalog->post_types();
-		$types         = array();
-
-		if (isset($input['post_types']) && is_array($input['post_types'])) {
-			foreach ($input['post_types'] as $slug) {
-				if (! is_string($slug)) {
-					continue;
-				}
-				$slug = sanitize_key($slug);
-				if (isset($types_catalog[$slug])) {
-					$types[] = $slug;
-				}
-			}
-		}
-
-		$types = array_values(array_unique($types));
-
 		$clean = array(
 			'configured'      => 1,
 			'menu_location'   => $menu,
-			'post_types'      => $types,
+			'post_types'      => $this->allowed_slugs($input['post_types'] ?? null, $catalog->post_types()),
+			'taxonomies'      => $this->allowed_slugs($input['taxonomies'] ?? null, $catalog->taxonomies()),
 			'include_sitemap' => ! empty($input['include_sitemap']) ? 1 : 0,
 		);
 
 		do_action(Plugin::hook('settings_updated'), $clean);
 
 		return $clean;
+	}
+
+	/**
+	 * @param mixed                 $raw     Submitted slugs.
+	 * @param array<string, string> $allowed Catalog slug => label.
+	 * @return string[]
+	 */
+	private function allowed_slugs($raw, array $allowed): array {
+		if (! is_array($raw)) {
+			return array();
+		}
+
+		$slugs = array();
+
+		foreach ($raw as $slug) {
+			if (! is_string($slug)) {
+				continue;
+			}
+			$slug = sanitize_key($slug);
+			if (isset($allowed[$slug])) {
+				$slugs[] = $slug;
+			}
+		}
+
+		return array_values(array_unique($slugs));
 	}
 }
 

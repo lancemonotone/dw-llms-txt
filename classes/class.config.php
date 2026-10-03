@@ -20,9 +20,9 @@ if (! defined('ABSPATH')) {
 final class Config {
 
 	/**
-	 * Normalized settings. Unconfigured installs: empty menu, no types, no sitemap.
+	 * Normalized settings. Unconfigured installs: empty selections, no sitemap.
 	 *
-	 * @return array{menu_location: string, post_types: string[], include_sitemap: bool}
+	 * @return array{menu_location: string, post_types: string[], taxonomies: string[], include_sitemap: bool}
 	 */
 	public function all(): array {
 		$raw = get_option(Plugin::OPTION, null);
@@ -31,25 +31,17 @@ final class Config {
 			return array(
 				'menu_location'   => '',
 				'post_types'      => array(),
+				'taxonomies'      => array(),
 				'include_sitemap' => false,
 			);
 		}
 
 		$menu = isset($raw['menu_location']) ? sanitize_key((string) $raw['menu_location']) : '';
 
-		$types = array();
-		if (isset($raw['post_types']) && is_array($raw['post_types'])) {
-			foreach ($raw['post_types'] as $slug) {
-				if (is_string($slug) && $slug !== '') {
-					$types[] = sanitize_key($slug);
-				}
-			}
-		}
-		$types = array_values(array_unique($types));
-
 		return array(
 			'menu_location'   => $menu,
-			'post_types'      => $types,
+			'post_types'      => $this->slug_list($raw['post_types'] ?? null),
+			'taxonomies'      => $this->slug_list($raw['taxonomies'] ?? null),
 			'include_sitemap' => ! empty($raw['include_sitemap']),
 		);
 	}
@@ -84,11 +76,40 @@ final class Config {
 	}
 
 	/**
+	 * Selected taxonomy slugs (empty when none or unconfigured).
+	 *
+	 * @return string[]
+	 */
+	public function taxonomies(): array {
+		return $this->all()['taxonomies'];
+	}
+
+	/**
 	 * Whether the Optional sitemap link is on.
 	 *
 	 * @return bool
 	 */
 	public function include_sitemap(): bool {
 		return $this->all()['include_sitemap'];
+	}
+
+	/**
+	 * @param mixed $raw Raw option value.
+	 * @return string[]
+	 */
+	private function slug_list($raw): array {
+		if (! is_array($raw)) {
+			return array();
+		}
+
+		$slugs = array();
+
+		foreach ($raw as $slug) {
+			if (is_string($slug) && $slug !== '') {
+				$slugs[] = sanitize_key($slug);
+			}
+		}
+
+		return array_values(array_unique($slugs));
 	}
 }

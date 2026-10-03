@@ -7,10 +7,10 @@ Author: Rus Miller.
 ## What it does
 
 - Registers a public `/llms.txt` rewrite endpoint
-- Builds plain-text sections from WordPress content (chosen menu navigation, selected CPT archives)
-- Until settings are saved: site title/tagline only (no invented menu, types, or sitemap)
+- Builds plain-text sections from WordPress content (chosen menu navigation, selected CPT archives, selected taxonomies)
+- Until settings are saved: site title/tagline only (no invented menu, types, taxonomies, or sitemap)
 - Caches the rendered body in a transient (invalidated on content/menu/settings changes)
-- Settings → **llms.txt**: choose menu location, content types, sitemap link, plus live preview
+- Settings → **llms.txt**: choose menu location, content types, taxonomies, sitemap link, plus live preview
 - Extensible via `Plugin::hook( 'document_sections' )` (resolves to `llms_txt_document_sections`)
 
 ## Install
@@ -27,7 +27,7 @@ classes/
   class.endpoint.php   Public document response
   class.document.php   Content → markdown body
   class.config.php     Stored option reads
-  class.catalog.php    Post-type / menu / archive discovery
+  class.catalog.php    Post-type / taxonomy / menu / archive discovery
   class.options.php    Options page + Settings API register/sanitize
   class.cache.php      Transient cache + invalidation
   class.admin.php      Options page UI + preview + notices

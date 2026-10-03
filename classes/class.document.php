@@ -34,11 +34,16 @@ final class Document {
 	 * @return string
 	 */
 	public function render(): string {
-		$sections = array(
-			$this->intro(),
-			$this->section('Navigation', $this->navigation()),
-			$this->section('Content types', $this->content_types()),
-			$this->section('Optional', $this->optional()),
+		$sections = array_merge(
+			array(
+				$this->intro(),
+				$this->section('Navigation', $this->navigation()),
+				$this->section('Content types', $this->content_types()),
+			),
+			$this->taxonomy_sections(),
+			array(
+				$this->section('Optional', $this->optional()),
+			)
 		);
 
 		/**
@@ -341,7 +346,7 @@ final class Document {
 	}
 
 	/**
-	 * Content-type archive bullets for selected (or all eligible) types.
+	 * Content-type archive bullets for selected types.
 	 *
 	 * Eligibility and labels come from Catalog::post_types().
 	 *
@@ -366,6 +371,36 @@ final class Document {
 		}
 
 		return $lines;
+	}
+
+	/**
+	 * One markdown section per selected taxonomy (term archive links).
+	 *
+	 * @return string[]
+	 */
+	private function taxonomy_sections(): array {
+		$sections = array();
+		$allowed  = $this->config->taxonomies();
+
+		foreach ($this->catalog->taxonomies() as $slug => $label) {
+			if (! in_array($slug, $allowed, true)) {
+				continue;
+			}
+
+			$lines = array();
+
+			foreach ($this->catalog->terms($slug) as $term) {
+				$lines[] = $this->link_line($term['title'], $term['url'], $term['description']);
+			}
+
+			$section = $this->section($label, $lines);
+
+			if ($section !== '') {
+				$sections[] = $section;
+			}
+		}
+
+		return $sections;
 	}
 
 	/**
