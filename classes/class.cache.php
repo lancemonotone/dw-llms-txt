@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Transient cache for the rendered llms.txt body.
+ * Transient cache for the rendered document body.
  *
  * @package Llms_Txt
  */
@@ -19,8 +19,6 @@ if (! defined('ABSPATH')) {
  */
 final class Cache {
 
-	private const KEY = 'llms_txt_body';
-
 	public function __construct() {
 		add_action('save_post', array($this, 'forget_on_post'));
 		add_action('deleted_post', array($this, 'forget'));
@@ -30,7 +28,7 @@ final class Cache {
 		add_action('delete_term', array($this, 'forget'));
 		add_action('update_option_blogdescription', array($this, 'forget'));
 		add_action('update_option_blogname', array($this, 'forget'));
-		add_action('llms_txt_settings_updated', array($this, 'forget'));
+		add_action(Plugin::hook('settings_updated'), array($this, 'forget'));
 	}
 
 	/**
@@ -39,20 +37,20 @@ final class Cache {
 	 * @return string
 	 */
 	public static function get(): string {
-		$cached = get_transient(self::KEY);
+		$cached = get_transient(Plugin::CACHE_KEY);
 
 		if (is_string($cached) && $cached !== '') {
 			return $cached;
 		}
 
 		$body = (new Document())->render();
-		set_transient(self::KEY, $body, DAY_IN_SECONDS);
+		set_transient(Plugin::CACHE_KEY, $body, DAY_IN_SECONDS);
 
 		return $body;
 	}
 
 	public function forget(): void {
-		delete_transient(self::KEY);
+		delete_transient(Plugin::CACHE_KEY);
 	}
 
 	/**

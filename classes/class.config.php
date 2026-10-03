@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Stored llms.txt option values (read path).
+ * Stored option values (read path).
  *
  * @package Llms_Txt
  */
@@ -25,7 +25,7 @@ final class Config {
 	 * @return array{menu_location: string, post_types: string[], include_sitemap: bool}
 	 */
 	public function all(): array {
-		$raw = get_option(Options::OPTION, null);
+		$raw = get_option(Plugin::OPTION, null);
 
 		if (! is_array($raw) || empty($raw['configured'])) {
 			return array(
@@ -60,7 +60,7 @@ final class Config {
 	 * @return bool
 	 */
 	public function is_configured(): bool {
-		$raw = get_option(Options::OPTION, null);
+		$raw = get_option(Plugin::OPTION, null);
 
 		return is_array($raw) && ! empty($raw['configured']);
 	}

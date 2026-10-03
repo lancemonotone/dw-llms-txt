@@ -11,7 +11,7 @@ Author: Rus Miller.
 - Until settings are saved: site title/tagline only (no invented menu, types, or sitemap)
 - Caches the rendered body in a transient (invalidated on content/menu/settings changes)
 - Settings → **llms.txt**: choose menu location, content types, sitemap link, plus live preview
-- Extensible via `llms_txt_document_sections`
+- Extensible via `Plugin::hook( 'document_sections' )` (resolves to `llms_txt_document_sections`)
 
 ## Install
 
@@ -22,9 +22,10 @@ Author: Rus Miller.
 ## Structure
 
 ```text
-llms-txt.php           Bootstrap (glob classes/)
+llms-txt.php           Bootstrap (loads Plugin, then glob classes/)
 classes/
-  class.endpoint.php   /llms.txt response
+  class.plugin.php     Document name, slugs, hook prefix (single source)
+  class.endpoint.php   Public document response
   class.document.php   Content → markdown body
   class.config.php     Stored option reads
   class.catalog.php    Post-type / menu / archive discovery
@@ -33,7 +34,7 @@ classes/
   class.admin.php      Options page UI + preview + notices
 ```
 
-Hook classes bootstrap themselves (`new ClassName()` at the bottom of the file). `Config`, `Catalog`, and `Document` are helpers only.
+Hook classes bootstrap themselves (`new ClassName()` at the bottom of the file). `Plugin`, `Config`, `Catalog`, and `Document` are helpers only. Change the public filename or prefixes in `Plugin` only.
 
 ## License
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Builds the llms.txt markdown from WordPress content.
+ * Builds the document markdown from WordPress content.
  *
  * @package Llms_Txt
  */
@@ -15,7 +15,7 @@ if (! defined('ABSPATH')) {
 }
 
 /**
- * Assembles the llms.txt document body.
+ * Assembles the document body.
  */
 final class Document {
 
@@ -46,7 +46,7 @@ final class Document {
 		 *
 		 * @param string[] $sections Markdown sections (empty strings are dropped).
 		 */
-		$sections = apply_filters('llms_txt_document_sections', $sections);
+		$sections = apply_filters(Plugin::hook('document_sections'), $sections);
 
 		$sections = array_values(
 			array_filter(

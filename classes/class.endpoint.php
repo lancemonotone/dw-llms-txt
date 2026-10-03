@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Public /llms.txt endpoint.
+ * Public document endpoint.
  *
  * @package Llms_Txt
  */
@@ -19,18 +19,22 @@ if (! defined('ABSPATH')) {
  */
 final class Endpoint {
 
-	public const RULE_REGEX = '^llms\.txt$';
-
-	public const RULE_QUERY = 'index.php?llms_txt=1';
-
 	public function __construct() {
 		add_action('init', array($this, 'register_rewrite'));
 		add_filter('query_vars', array($this, 'query_vars'));
 		add_action('template_redirect', array($this, 'maybe_render'));
 	}
 
+	/**
+	 * Registers the rewrite and flushes permalinks (activation).
+	 */
+	public static function activate(): void {
+		add_rewrite_rule(Plugin::rewrite_regex(), Plugin::rewrite_query(), 'top');
+		flush_rewrite_rules();
+	}
+
 	public function register_rewrite(): void {
-		add_rewrite_rule(self::RULE_REGEX, self::RULE_QUERY, 'top');
+		add_rewrite_rule(Plugin::rewrite_regex(), Plugin::rewrite_query(), 'top');
 	}
 
 	/**
@@ -38,16 +42,16 @@ final class Endpoint {
 	 * @return string[]
 	 */
 	public function query_vars(array $vars): array {
-		$vars[] = 'llms_txt';
+		$vars[] = Plugin::QUERY_VAR;
 
 		return $vars;
 	}
 
 	/**
-	 * Print the cached document when this request is /llms.txt.
+	 * Print the cached document when this request matches the rewrite.
 	 */
 	public function maybe_render(): void {
-		if (! $this->is_llms_request()) {
+		if (! $this->is_document_request()) {
 			return;
 		}
 
@@ -59,12 +63,10 @@ final class Endpoint {
 	}
 
 	/**
-	 * Whether this request matched the llms.txt rewrite.
-	 *
-	 * @return bool
+	 * Whether this request matched the document rewrite.
 	 */
-	private function is_llms_request(): bool {
-		return (string) get_query_var('llms_txt') === '1';
+	private function is_document_request(): bool {
+		return (string) get_query_var(Plugin::QUERY_VAR) === '1';
 	}
 }
 

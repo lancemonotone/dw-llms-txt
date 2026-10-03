@@ -15,12 +15,12 @@ if (! defined('ABSPATH')) {
 }
 
 /**
- * Settings → llms.txt screen markup.
+ * Settings screen markup.
  */
 final class Admin {
 
 	public function __construct() {
-		add_action('llms_txt_options_page', array($this, 'render'));
+		add_action(Plugin::hook('options_page'), array($this, 'render'));
 		add_action('admin_notices', array($this, 'notices'));
 	}
 
@@ -33,7 +33,7 @@ final class Admin {
 		}
 
 		if (isset($_GET['settings-updated'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- flag from options.php redirect.
-			wp_cache_delete(Options::OPTION, 'options');
+			wp_cache_delete(Plugin::OPTION, 'options');
 			wp_cache_delete('alloptions', 'options');
 		}
 
@@ -44,33 +44,34 @@ final class Admin {
 		$types    = $catalog->post_types();
 		$selected = $settings['post_types'];
 
-		$url  = esc_url(home_url('/llms.txt'));
-		$body = esc_textarea((new Document())->render());
+		$title         = esc_html(Plugin::DOCUMENT);
+		$url           = esc_url(home_url(Plugin::path()));
+		$body          = esc_textarea((new Document())->render());
+		$menu_field_id = esc_attr(Plugin::SLUG . '-menu-location');
+		$menu_options  = $this->menu_options_html($menus, $settings['menu_location']);
+		$type_checks   = $this->post_type_checks_html($types, $selected);
+		$sitemap_on    = $settings['include_sitemap'] ? ' checked="checked"' : '';
+		$option_name   = esc_attr(Plugin::OPTION);
 
-		$menu_options = $this->menu_options_html($menus, $settings['menu_location']);
-		$type_checks  = $this->post_type_checks_html($types, $selected);
-		$sitemap_on   = $settings['include_sitemap'] ? ' checked="checked"' : '';
-		$option_name  = esc_attr(Options::OPTION);
-
-		settings_errors(Options::OPTION);
+		settings_errors(Plugin::OPTION);
 
 		echo <<<HTML
 <div class="wrap">
-	<h1>llms.txt</h1>
-	<p><a href="{$url}">View public llms.txt</a></p>
+	<h1>{$title}</h1>
+	<p><a href="{$url}">View public {$title}</a></p>
 
 	<form method="post" action="options.php">
 HTML;
 
-		settings_fields(Options::GROUP);
+		settings_fields(Plugin::GROUP);
 
 		echo <<<HTML
 		<input type="hidden" name="{$option_name}[configured]" value="1" />
 		<table class="form-table" role="presentation">
 			<tr>
-				<th scope="row"><label for="llms-txt-menu-location">Navigation menu</label></th>
+				<th scope="row"><label for="{$menu_field_id}">Navigation menu</label></th>
 				<td>
-					<select name="{$option_name}[menu_location]" id="llms-txt-menu-location">
+					<select name="{$option_name}[menu_location]" id="{$menu_field_id}">
 						{$menu_options}
 					</select>
 					<p class="description">Theme menu location for the Navigation section. Leave as None to omit that section.</p>
@@ -145,7 +146,7 @@ HTML;
 
 		foreach ($catalog as $slug => $label) {
 			$checked = isset($selected_map[$slug]) ? ' checked="checked"' : '';
-			$name    = esc_attr(Options::OPTION . '[post_types][]');
+			$name    = esc_attr(Plugin::OPTION . '[post_types][]');
 			$html   .= '<label>';
 			$html   .= '<input type="checkbox" name="' . $name . '" value="' . esc_attr($slug) . '"' . $checked . ' /> ';
 			$html   .= esc_html($label . ' (' . $slug . ')');
@@ -156,19 +157,22 @@ HTML;
 	}
 
 	/**
-	 * Warn if a physical root llms.txt would shadow the plugin endpoint.
+	 * Warn if a physical root document would shadow the plugin endpoint.
 	 */
 	public function notices(): void {
 		if (! current_user_can('manage_options')) {
 			return;
 		}
 
-		if (! file_exists(ABSPATH . 'llms.txt')) {
+		if (! file_exists(ABSPATH . Plugin::DOCUMENT)) {
 			return;
 		}
 
 		$message = esc_html(
-			'A physical llms.txt file is in the site root. The web server may serve that file instead of this plugin. Remove it to use the dynamic endpoint.'
+			sprintf(
+				'A physical %s file is in the site root. The web server may serve that file instead of this plugin. Remove it to use the dynamic endpoint.',
+				Plugin::DOCUMENT
+			)
 		);
 
 		echo <<<HTML

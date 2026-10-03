@@ -22,24 +22,25 @@ define( 'LLMS_TXT_FILE', __FILE__ );
 define( 'LLMS_TXT_DIR', plugin_dir_path( __FILE__ ) );
 define( 'LLMS_TXT_URL', plugin_dir_url( __FILE__ ) );
 
+require_once LLMS_TXT_DIR . 'classes/class.plugin.php';
+
 foreach ( glob( LLMS_TXT_DIR . 'classes/class.*.php' ) as $filename ) {
+	if ( basename( $filename ) === 'class.plugin.php' ) {
+		continue;
+	}
 	require_once $filename;
 }
 
-/**
- * Registers the rewrite rule and flushes permalinks.
- */
-function llms_txt_activate(): void {
-	add_rewrite_rule( \Llms_Txt\Endpoint::RULE_REGEX, \Llms_Txt\Endpoint::RULE_QUERY, 'top' );
-	flush_rewrite_rules();
-}
+register_activation_hook(
+	__FILE__,
+	static function (): void {
+		\Llms_Txt\Endpoint::activate();
+	}
+);
 
-/**
- * Flushes permalinks on deactivation.
- */
-function llms_txt_deactivate(): void {
-	flush_rewrite_rules();
-}
-
-register_activation_hook( __FILE__, 'llms_txt_activate' );
-register_deactivation_hook( __FILE__, 'llms_txt_deactivate' );
+register_deactivation_hook(
+	__FILE__,
+	static function (): void {
+		flush_rewrite_rules();
+	}
+);

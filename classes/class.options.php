@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Registers the llms.txt options page and Settings API option.
+ * Registers the options page and Settings API option.
  *
  * @package Llms_Txt
  */
@@ -16,34 +16,30 @@ if (! defined('ABSPATH')) {
 
 final class Options {
 
-	public const OPTION = 'llms_txt_settings';
-
-	public const GROUP = 'llms_txt';
-
 	public function __construct() {
 		add_action('admin_menu', array($this, 'menu'));
 		add_action('admin_init', array($this, 'register'));
 	}
 
 	/**
-	 * Settings → llms.txt. Markup comes from the llms_txt_options_page action.
+	 * Settings page. Markup comes from the options_page action.
 	 */
 	public function menu(): void {
 		add_options_page(
-			'llms.txt',
-			'llms.txt',
+			Plugin::DOCUMENT,
+			Plugin::DOCUMENT,
 			'manage_options',
-			'llms-txt',
+			Plugin::SLUG,
 			static function (): void {
-				do_action('llms_txt_options_page');
+				do_action(Plugin::hook('options_page'));
 			}
 		);
 	}
 
 	public function register(): void {
 		register_setting(
-			self::GROUP,
-			self::OPTION,
+			Plugin::GROUP,
+			Plugin::OPTION,
 			array(
 				'sanitize_callback' => array($this, 'sanitize'),
 			)
@@ -93,7 +89,7 @@ final class Options {
 			'include_sitemap' => ! empty($input['include_sitemap']) ? 1 : 0,
 		);
 
-		do_action('llms_txt_settings_updated', $clean);
+		do_action(Plugin::hook('settings_updated'), $clean);
 
 		return $clean;
 	}
