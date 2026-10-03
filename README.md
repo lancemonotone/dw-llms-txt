@@ -22,9 +22,8 @@ Author: Rus Miller.
 ## Structure
 
 ```text
-llms-txt.php           Bootstrap (loads Plugin, then glob classes/)
+llms-txt.php           Bootstrap + Plugin identity (document name, slugs, hooks)
 classes/
-  class.plugin.php     Document name, slugs, hook prefix (single source)
   class.endpoint.php   Public document response
   class.document.php   Content → markdown body
   class.config.php     Stored option reads
@@ -34,7 +33,7 @@ classes/
   class.admin.php      Options page UI + preview + notices
 ```
 
-Hook classes bootstrap themselves (`new ClassName()` at the bottom of the file). `Plugin`, `Config`, `Catalog`, and `Document` are helpers only. Change the public filename or prefixes in `Plugin` only.
+Hook classes bootstrap themselves (`new ClassName()` at the bottom of the file). `Config`, `Catalog`, and `Document` are helpers only. Change the public filename or prefixes on `Plugin` in `llms-txt.php` only.
 
 ## License
 
