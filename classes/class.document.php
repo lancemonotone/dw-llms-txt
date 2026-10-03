@@ -172,45 +172,24 @@ final class Document {
 	}
 
 	/**
-	 * Menu ID from settings, or first preferred theme location.
+	 * Menu ID for the configured theme location, or 0 when unset/unassigned.
 	 *
-	 * @return int 0 when none.
+	 * @return int
 	 */
 	private function primary_menu_id(): int {
-		$locations = get_nav_menu_locations();
+		$chosen = $this->config->menu_location();
 
-		if ($locations === array()) {
+		if ($chosen === '') {
 			return 0;
 		}
 
-		$chosen = $this->config->menu_location();
+		$locations = get_nav_menu_locations();
 
-		if ($chosen !== '' && ! empty($locations[$chosen])) {
-			return (int) $locations[$chosen];
+		if ($locations === array() || empty($locations[$chosen])) {
+			return 0;
 		}
 
-		/**
-		 * Preferred theme_location slugs when menu location is Auto.
-		 *
-		 * @param string[] $slugs
-		 */
-		$preferred = apply_filters(
-			'llms_txt_menu_locations',
-			array('primary', 'main', 'main-nav', 'header', 'menu-1')
-		);
-
-		foreach ($preferred as $slug) {
-			if (! is_string($slug) || $slug === '') {
-				continue;
-			}
-			if (! empty($locations[$slug])) {
-				return (int) $locations[$slug];
-			}
-		}
-
-		$first = reset($locations);
-
-		return $first ? (int) $first : 0;
+		return (int) $locations[$chosen];
 	}
 
 	/**
@@ -373,7 +352,7 @@ final class Document {
 		$allowed = $this->config->post_types();
 
 		foreach ($this->catalog->post_types() as $slug => $label) {
-			if (is_array($allowed) && ! in_array($slug, $allowed, true)) {
+			if (! in_array($slug, $allowed, true)) {
 				continue;
 			}
 

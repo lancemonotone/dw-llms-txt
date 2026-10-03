@@ -59,19 +59,12 @@ final class Endpoint {
 	}
 
 	/**
-	 * Whether this request is for /llms.txt (query var or path fallback).
+	 * Whether this request matched the llms.txt rewrite.
 	 *
 	 * @return bool
 	 */
 	private function is_llms_request(): bool {
-		if ((string) get_query_var('llms_txt') === '1') {
-			return true;
-		}
-
-		$request_uri = isset($_SERVER['REQUEST_URI']) ? (string) wp_unslash($_SERVER['REQUEST_URI']) : '';
-		$path        = wp_parse_url($request_uri, PHP_URL_PATH);
-
-		return is_string($path) && untrailingslashit($path) === '/llms.txt';
+		return (string) get_query_var('llms_txt') === '1';
 	}
 }
 

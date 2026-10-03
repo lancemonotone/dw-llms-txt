@@ -6,17 +6,18 @@ Author: Rus Miller.
 
 ## What it does
 
-- Registers a public `/llms.txt` endpoint (rewrite + `REQUEST_URI` fallback)
-- Builds plain-text sections from WordPress content (primary menu navigation, selected CPT archives)
+- Registers a public `/llms.txt` rewrite endpoint
+- Builds plain-text sections from WordPress content (chosen menu navigation, selected CPT archives)
+- Until settings are saved: site title/tagline only (no invented menu, types, or sitemap)
 - Caches the rendered body in a transient (invalidated on content/menu/settings changes)
 - Settings → **llms.txt**: choose menu location, content types, sitemap link, plus live preview
-- Extensible via `llms_txt_document_sections` and `llms_txt_menu_locations` filters
+- Extensible via `llms_txt_document_sections`
 
 ## Install
 
 1. Copy this folder to `wp-content/plugins/llms-txt/` (folder name can vary)
-2. Activate **llms.txt**
-3. Visit Settings → **llms.txt** to choose what appears, then open `https://yoursite.example/llms.txt` (flush permalinks once if needed)
+2. Activate **llms.txt** (activation flushes permalinks)
+3. Visit Settings → **llms.txt**, save what should appear, then open `https://yoursite.example/llms.txt`
 
 ## Structure
 

@@ -20,9 +20,9 @@ if (! defined('ABSPATH')) {
 final class Config {
 
 	/**
-	 * Normalized settings. Fresh installs: auto menu, all types, sitemap on.
+	 * Normalized settings. Unconfigured installs: empty menu, no types, no sitemap.
 	 *
-	 * @return array{menu_location: string, post_types: string[]|null, include_sitemap: bool}
+	 * @return array{menu_location: string, post_types: string[], include_sitemap: bool}
 	 */
 	public function all(): array {
 		$raw = get_option(Options::OPTION, null);
@@ -30,8 +30,8 @@ final class Config {
 		if (! is_array($raw) || empty($raw['configured'])) {
 			return array(
 				'menu_location'   => '',
-				'post_types'      => null,
-				'include_sitemap' => true,
+				'post_types'      => array(),
+				'include_sitemap' => false,
 			);
 		}
 
@@ -66,7 +66,7 @@ final class Config {
 	}
 
 	/**
-	 * Theme menu location slug, or empty for auto.
+	 * Theme menu location slug, or empty for none.
 	 *
 	 * @return string
 	 */
@@ -75,11 +75,11 @@ final class Config {
 	}
 
 	/**
-	 * Selected content-type slugs, or null for all eligible types.
+	 * Selected content-type slugs (empty when none or unconfigured).
 	 *
-	 * @return string[]|null
+	 * @return string[]
 	 */
-	public function post_types(): ?array {
+	public function post_types(): array {
 		return $this->all()['post_types'];
 	}
 

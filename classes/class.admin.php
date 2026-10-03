@@ -35,7 +35,6 @@ final class Admin {
 		if (isset($_GET['settings-updated'])) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- flag from options.php redirect.
 			wp_cache_delete(Options::OPTION, 'options');
 			wp_cache_delete('alloptions', 'options');
-			delete_transient('llms_txt_body');
 		}
 
 		$config   = new Config();
@@ -44,10 +43,6 @@ final class Admin {
 		$menus    = $catalog->assigned_menu_locations();
 		$types    = $catalog->post_types();
 		$selected = $settings['post_types'];
-
-		if ($selected === null) {
-			$selected = array_keys($types);
-		}
 
 		$url  = esc_url(home_url('/llms.txt'));
 		$body = esc_textarea((new Document())->render());
@@ -78,7 +73,7 @@ HTML;
 					<select name="{$option_name}[menu_location]" id="llms-txt-menu-location">
 						{$menu_options}
 					</select>
-					<p class="description">Menu used for the Navigation section. Auto uses preferred theme locations.</p>
+					<p class="description">Theme menu location for the Navigation section. Leave as None to omit that section.</p>
 				</td>
 			</tr>
 			<tr>
@@ -122,8 +117,8 @@ HTML;
 	 * @return string HTML <option> list.
 	 */
 	private function menu_options_html(array $menus, string $current): string {
-		$auto_selected = $current === '' ? ' selected="selected"' : '';
-		$html          = '<option value=""' . $auto_selected . '>' . esc_html('Auto (preferred locations)') . '</option>';
+		$none_selected = $current === '' ? ' selected="selected"' : '';
+		$html          = '<option value=""' . $none_selected . '>' . esc_html('None') . '</option>';
 
 		foreach ($menus as $slug => $label) {
 			$selected = $slug === $current ? ' selected="selected"' : '';
