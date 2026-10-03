@@ -48,10 +48,6 @@ final class Document {
 		 */
 		$sections = apply_filters('llms_txt_document_sections', $sections);
 
-		if (! is_array($sections)) {
-			$sections = array();
-		}
-
 		$sections = array_values(
 			array_filter(
 				$sections,
@@ -183,7 +179,7 @@ final class Document {
 	private function primary_menu_id(): int {
 		$locations = get_nav_menu_locations();
 
-		if (! is_array($locations) || $locations === array()) {
+		if ($locations === array()) {
 			return 0;
 		}
 
@@ -202,10 +198,6 @@ final class Document {
 			'llms_txt_menu_locations',
 			array('primary', 'main', 'main-nav', 'header', 'menu-1')
 		);
-
-		if (! is_array($preferred)) {
-			$preferred = array();
-		}
 
 		foreach ($preferred as $slug) {
 			if (! is_string($slug) || $slug === '') {
@@ -372,62 +364,29 @@ final class Document {
 	/**
 	 * Content-type archive bullets for selected (or all eligible) types.
 	 *
+	 * Eligibility and labels come from Catalog::post_types().
+	 *
 	 * @return string[]
 	 */
 	private function content_types(): array {
-		$lines = array();
-
-		$post_types = get_post_types(
-			array(
-				'public' => true,
-			),
-			'objects'
-		);
-
-		if (! is_array($post_types)) {
-			return array();
-		}
-
+		$lines   = array();
 		$allowed = $this->config->post_types();
 
-		foreach ($post_types as $post_type => $object) {
-			if (! is_string($post_type) || ! $object instanceof \WP_Post_Type) {
+		foreach ($this->catalog->post_types() as $slug => $label) {
+			if (is_array($allowed) && ! in_array($slug, $allowed, true)) {
 				continue;
 			}
 
-			if (in_array($post_type, array('attachment', 'page'), true)) {
+			$url = $this->catalog->archive_url($slug);
+
+			if ($url === '') {
 				continue;
 			}
 
-			if (is_array($allowed) && ! in_array($post_type, $allowed, true)) {
-				continue;
-			}
-
-			$line = $this->archive_line($post_type, $object);
-
-			if ($line !== null) {
-				$lines[] = $line;
-			}
+			$lines[] = $this->link_line($label, $url);
 		}
 
 		return $lines;
-	}
-
-	/**
-	 * One archive link line, or null when there is no archive URL.
-	 *
-	 * @return string|null
-	 */
-	private function archive_line(string $post_type, \WP_Post_Type $object): ?string {
-		$url = $this->catalog->archive_url($post_type, $object);
-
-		if ($url === '') {
-			return null;
-		}
-
-		$label = isset($object->labels->name) ? (string) $object->labels->name : $post_type;
-
-		return $this->link_line($label, $url);
 	}
 
 	/**

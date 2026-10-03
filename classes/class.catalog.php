@@ -32,10 +32,6 @@ final class Catalog {
 			'objects'
 		);
 
-		if (! is_array($objects)) {
-			return array();
-		}
-
 		$out = array();
 
 		foreach ($objects as $slug => $object) {
@@ -100,12 +96,8 @@ final class Catalog {
 		$locations  = get_nav_menu_locations();
 		$registered = get_registered_nav_menus();
 
-		if (! is_array($locations) || $locations === array()) {
+		if ($locations === array()) {
 			return array();
-		}
-
-		if (! is_array($registered)) {
-			$registered = array();
 		}
 
 		$out = array();
